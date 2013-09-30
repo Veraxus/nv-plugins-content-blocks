@@ -1,8 +1,8 @@
 <?php
 /*
-Plugin Name: Content Blocks (Nouveau)
+Plugin Name: NOUVEAU [X] Content Blocks
 Description: Allows the main content area to be broken into "blocks" that can be more easily used in themes.
-Author: Matt Van Andel
+Author: Veraxus
 Version: β1
 Author URI: http://nouveauframework.com/
 Plugin URI: http://nouveauframework.com/contentblocks

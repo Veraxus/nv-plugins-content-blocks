@@ -1,4 +1,4 @@
-## Content Blocks (Nouveau) ##
+## NOUVEAU [X] Content Blocks ##
 
 A lightweight WordPress plugin that allows you to define/delimit content blocks for any content, and then output those blocks in theme templates.
 

@@ -1,4 +1,4 @@
-=== Content Blocks (Nouveau) ===
+=== NOUVEAU [X] Content Blocks ===
 Contributors: veraxus
 Tags: admin, theme, tinymce, editor, templates, developer, nouveau
 Requires at least: 3.5
