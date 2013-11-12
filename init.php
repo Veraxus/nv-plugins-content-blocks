@@ -1,9 +1,9 @@
 <?php
 /*
-Plugin Name: NOUVEAU [X] Content Blocks
+Plugin Name: NOUVEAU Content Blocks
 Description: Allows the main content area to be broken into "blocks" that can be more easily used in themes.
 Author: Veraxus
-Version: β1
+Version: 0.2
 Author URI: http://nouveauframework.com/
 Plugin URI: http://nouveauframework.com/contentblocks
 License: GPLv2 or later
@@ -11,11 +11,13 @@ License: GPLv2 or later
 
 //Initialize the plugin
 NV_ContentBlocks::init();
-require_once plugin_dir_path(__FILE__).'inc/functions.php';
+
+// Load the global theme functions
+require_once plugin_dir_path(__FILE__).'inc/theme-functions.php';
 
 
 /**
- * This controls the Selective Autop
+ * This class contains all the bootstrapping needed to get Content Blocks working reliably.
  */
 class NV_ContentBlocks {
 
@@ -25,13 +27,13 @@ class NV_ContentBlocks {
     public static function init() {
 
         // Add new buttons to TinyMCE
-        add_action('init', array('NV_ContentBlocks','mceButtonHooks') );
+        add_action('init', array(__CLASS__,'mceButtonHooks') );
 
         // Enable help text
-        add_action('admin_head', array('NV_ContentBlocks','help') );
+        add_action('admin_head', array(__CLASS__,'help') );
 
         // Modify the post object
-        add_action('the_post', array('NV_ContentBlocks','createBlocks') );
+        add_action('the_post', array(__CLASS__,'createBlocks') );
     }
 
 
@@ -39,13 +41,17 @@ class NV_ContentBlocks {
      * Allows modification of the post object before it it used. We pre-parse the content into a new post_blocks
      * property of the post object. This property is an array of block content.
      *
-     * @param $post Ref.
+     * @param $post
      */
     public static function createBlocks($post) {
         $post->post_blocks = array();
 
-        if ( preg_match( '/<!--block(.*?)?-->/', $post->post_content, $matches ) ) {
-            $post->post_blocks = explode( $matches[0], $post->post_content );
+        // Standardize the block delimiters
+        $temp_content = preg_replace('/<!--block(.*)?-->/','<!--block-->',$post->post_content);
+
+        // Use delimiters to split the content into blocks
+        if ( preg_match( '/<!--block-->/', $temp_content, $matches ) ) {
+            $post->post_blocks = explode( $matches[0], $temp_content );
         }
     }
 
@@ -56,10 +62,10 @@ class NV_ContentBlocks {
     public static function mceButtonHooks() {
 
         // Register the Javascript plugin with TinyMCE
-        add_filter("mce_external_plugins", array('NV_ContentBlocks','mceRegisterJS') );
+        add_filter("mce_external_plugins", array(__CLASS__,'mceRegisterJS') );
 
         // Register the new button with TinyMCE
-        add_filter('mce_buttons', array('NV_ContentBlocks','mceRegisterButtons') );
+        add_filter('mce_buttons', array(__CLASS__,'mceRegisterButtons') );
 
         add_editor_style( plugins_url('/css/editor.css',__file__) );
 
@@ -74,21 +80,22 @@ class NV_ContentBlocks {
      * @return mixed
      */
     public static function mceRegisterButtons($buttons) {
-//        array_push( $buttons, 'nv_block', 'dropcap', 'showrecent' ); // dropcap', 'recentposts
-        array_push( $buttons, 'nv_block', 'dropcap' ); // dropcap', 'recentposts
+        // Add a reference to our JS button "buttonContentBlock" so that TinyMCE will load it
+        array_push( $buttons, 'buttonContentBlock' );
         return $buttons;
     }
 
 
     /**
-     * Load the JS for the TinyMCE plugin
+     * Enqueue the plugin JS with TinyMCE using WordPress mce_external_plugins hook
      *
-     * @param $plugin_array
+     * @param array $plugin_array
      *
      * @return mixed
      */
     public static function mceRegisterJS($plugin_array) {
-        $plugin_array['NvContentBlocks'] = plugins_url('/js/tinymce-blocks.js',__file__);
+        // Array key is the plugins JS class, the value is the js path.
+        $plugin_array['NVContentBlocks'] = plugins_url('/js/tinymce-blocks.js',__file__);
         return $plugin_array;
     }
 
@@ -115,7 +122,8 @@ class NV_ContentBlocks {
                 get_current_screen()->add_help_tab( array(
                     'id'      => 'nvcontentblocks',
                     'title'   => __( 'Content Blocks', 'nouveau' ),
-                    'content' => '<p>'.__( "Content blocks separate the main content area into separate blocks. Similar to the &lt;!--more--&gt; tag, <code>the_content()</code> will only display content up to the first &lt;!--block--&gt; tag. You may use <code>the_block()</code> or <code>get_the_block()</code> to load further content blocks at any point within the loop of your theme. <code>the_block()</code> can take one argument: the number of the block you want to load. Default is 1 (first block), while <code>0</code> will load <code>the_content()</code> instead.", 'nouveau' ).'</p>',
+                    'content' => '<p>'.__( "Content blocks split the main content area into multiple chunks, similar to the <code>&lt;!--more--&gt;</code> tag. Authors can even give a block a title to more easily remember block topics when writing content.", 'nvLangScope' ).'</p>'.
+                        '<p>'.__("<b>For Theme Developers</b> – The theme function <code>the_content()</code> will continue to load ALL of a pages content (including all blocks). To display only specific blocks in your theme templates, use either <code>the_block()</code> or <code>get_the_block()</code> and specify the number of the block you want to load. Note: <code>0</code> will load only the content above the first block.",'nvLangScope').'</p>',
                 ) );
                 break;
 

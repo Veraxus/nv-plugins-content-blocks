@@ -1,5 +1,8 @@
-(function() {
-    tinymce.create('tinymce.plugins.NvContentBlocks', {
+(function($) {
+
+    console.log('Loading TinyMCE plugin...');
+
+    tinymce.create('tinymce.plugins.NVContentBlocks', {
         /**
          * Initializes the plugin, this will be executed after the plugin has been created.
          * This call is done before the editor instance has finished it's initialization so use the onInit event
@@ -10,22 +13,38 @@
          */
         init : function(ed, url) {
 
-            // Set img url (not under js dir)
-            var img = url.replace(/\/js/g,"/images");
-            var blockImg = '<img src="' + img + '/trans.gif" class="mce-nv-block mceItemNoResize" title="Block Delimiter" />';
+            console.log('Content Blocks TinyMCE Plugin initialized!');
 
-            // Register the nvblock command for the nv_block button
-            ed.addCommand('nvblock', function() {
-                ed.execCommand('mceInsertContent', false, blockImg);
+            // Set img url (which is NOT not under default js dir)
+            var img = url.replace(/\/js/g,"/images");
+
+            // Set delimiter for visual mode
+            var blockImg = '<div class="nv-content-block">Content Block</div>';
+
+            // Register the command that will insert the block in visual mode
+            ed.addCommand('insertContentBlock', function() {
+
+                // What node is the caret currently inside?
+                var node = ed.selection.getNode();
+
+                if ( ed.dom.hasClass(node,'nv-content-block') ) {
+                    // We are inside a divider, delete it
+                    ed.dom.remove(node);
+                }
+                else {
+                    // NOT inside divider, use TinyMCE mceInsertContent command to insert our divider
+                    ed.execCommand('mceInsertContent', false, blockImg);
+                }
             });
 
-            // Register the dropcap button
-            ed.addButton('nv_block', {
+            // Add a button to TinyMCE that triggers our insertContentBlock command
+            ed.addButton('buttonContentBlock', {
                 title : 'Add a Content Block Separator',
-                cmd : 'nvblock',
+                cmd : 'insertContentBlock',
                 image : img + '/page.gif'
             });
 
+            // Pass along our custom variables to our custom handler...
             this._handleBlockBreak(ed, url, img, blockImg);
 
         },
@@ -39,46 +58,82 @@
          */
         _handleBlockBreak : function(editor, url, img, blockImg) {
 
-            // Display morebreak instead if img in element path
-            editor.onPostRender.add(function() {
-                if (editor.theme.onResolveName) {
-                    editor.theme.onResolveName.add(function(th, o) {
-                        if (o.node.nodeName == 'IMG') {
-                            if ( editor.dom.hasClass(o.node, 'mce-nv-block') ) {
-                                o.name = 'nvblock';
-                            }
-                        }
-
-                    });
-                }
-            });
-
-            // Replace <!--block--> with images for HTML editor
+            /**
+             * Text => Visual Switch
+             *
+             * This is triggered when switching from TEXT mode to VISUAL MODE.
+             *
+             * This is also automatically triggered within onPostRender whenever the Visual Editor is loaded.
+             */
             editor.onBeforeSetContent.add(function(ed, o) {
+                console.log('onBeforeSetContent()');
                 if ( o.content ) {
-                    o.content = o.content.replace(/<!--block(.*?)-->/g, blockImg);
-                }
-            });
 
-            // Replace images with <!--block--> for the visual editor
-            editor.onPostProcess.add(function(ed, o) {
-                if (o.get) {
-                    o.content = o.content.replace(/<img[^>]+>/g, function(im) {
+                    o.content = o.content.replace(
+                        /<!--block\s*\(?(.*)?\)?-->/g,
+                        function(obj,grp) {
 
-                        if (im.indexOf('class="mce-nv-block') !== -1) {
-                            im = '<!--block-->';
+                            if ( grp==='undefined' | grp.trim()==='' ) {
+                                // If no message is specified, default to...
+                                grp = 'Content Block';
+                            }
+                            else {
+                                // strip out opening and closing parentheses
+                                grp = grp.replace(/^\s*\(?/, '');
+                                grp = grp.replace(/\)?$/, '');
+                            }
+                            obj = '<div class="nv-content-block">'+grp+'</div>';
+                            return obj;
                         }
-                        return im;
+                    );
 
-                    });
                 }
             });
 
-            // Set active buttons if user selected block
-            editor.onNodeChange.add(function(ed, cm, n) {
-                cm.setActive('wp_block', n.nodeName === 'IMG' && ed.dom.hasClass(n, 'mce-nv-block'));
+
+            /**
+             * Visual => Text Switch
+             *
+             * This converts the visual content into plain, raw database content. This is triggered when switching
+             * from VISUAL to TEXT MODE, when saving, and also periodically (every couple seconds).
+             *
+             * NOTE: The stripping of <br> and <p> tags happens AFTER this is executed and newlines are ignored. Use
+             * <br> or <p> wraps in this function to add blank newlines in the plain text editor.
+             */
+            editor.onPostProcess.add(function(ed, o) {
+                console.log('onPostProcess()');
+                if (o.get) {
+
+                    console.log(o.content);
+
+                    o.content = o.content.replace( /<div\sclass="nv-content-block">([^<]*)<\/div>/g, function(obj,grp) {
+                        if (grp.trim()==='' || grp.trim()==='undefined') {
+                            grp = 'Content Block';
+                        }
+                        else {
+                            grp = grp.replace( /\n|\r/g, '' );
+                            grp = grp.replace( /<br\s?\/?>/g, '' );
+                        }
+                        obj = '<p><!--block ('+grp+')--></p>';
+                        return obj;
+                    });
+
+                    console.log(o.content);
+
+                }
             });
+
+
+            /**
+             * This is triggered last when the visual mode is loaded.
+             */
+//            editor.onNodeChange.add(function(ed, cm, n) {
+//                console.log('onNodeChange()');
+//                cm.setActive('wp_block', n.nodeName === 'IMG' && ed.dom.hasClass(n, 'mce-nv-block'));
+//            });
         },
+
+
         /**
          * Returns information about the plugin as a name/value array.
          * The current keys are longname, author, authorurl, infourl and version.
@@ -88,7 +143,7 @@
         getInfo : function() {
             return {
                 longname : 'NOUVEAU Content Blocks',
-                author : 'Veraxus',
+                author : 'Matt Van Andel',
                 authorurl : 'http://nouveauframework.org/',
                 infourl : 'http://nouveauframework.org/content-blocks',
                 version : "0.1"
@@ -96,6 +151,6 @@
         }
     });
 
-    // Register plugin
-    tinymce.PluginManager.add( 'NvContentBlocks', tinymce.plugins.NvContentBlocks );
-})();
+    // Register plugin with TinyMCE
+    tinymce.PluginManager.add( 'NVContentBlocks', tinymce.plugins.NVContentBlocks );
+})(jQuery);

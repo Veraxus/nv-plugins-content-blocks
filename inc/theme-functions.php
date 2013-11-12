@@ -28,6 +28,7 @@ if ( !function_exists('get_the_content_block')) {
         return $output;
     }}
 
+
 if ( !function_exists('the_content_block')) {
     /**
      * Outputs the specified block to the page.
