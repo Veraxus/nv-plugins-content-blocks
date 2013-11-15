@@ -73,7 +73,7 @@
                         /<!--block\s*\(?(.*)?\)?-->/g,
                         function(obj,grp) {
 
-                            if ( grp==='undefined' | grp.trim()==='' ) {
+                            if ( typeof grp==='undefined' || grp.trim()==='' ) {
                                 // If no message is specified, default to...
                                 grp = 'Content Block';
                             }

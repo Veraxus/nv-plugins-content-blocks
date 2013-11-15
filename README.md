@@ -11,6 +11,9 @@ You can then load specific blocks anywhere in your template files using the new 
 
 ### Changelog ###
 
+#### 0.3 ( 2013/11/15 ) ####
+* Squished a couple small JS bugs.
+
 #### 0.2 ( 2013/11/12 ) ####
 * Block markers can now be labelled in the editor. This really helps to simplify admin.
 

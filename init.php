@@ -3,7 +3,7 @@
 Plugin Name: NOUVEAU Content Blocks
 Description: Allows the main content area to be broken into "blocks" that can be more easily used in themes.
 Author: Veraxus
-Version: 0.2
+Version: 0.3
 Author URI: http://nouveauframework.com/
 Plugin URI: http://nouveauframework.com/contentblocks
 License: GPLv2 or later
@@ -27,13 +27,13 @@ class NV_ContentBlocks {
     public static function init() {
 
         // Add new buttons to TinyMCE
-        add_action('init', array(__CLASS__,'mceButtonHooks') );
+        add_action('init', array( __CLASS__, 'mceButtonHooks' ) );
 
         // Enable help text
-        add_action('admin_head', array(__CLASS__,'help') );
+        add_action('admin_head', array( __CLASS__, 'help' ) );
 
         // Modify the post object
-        add_action('the_post', array(__CLASS__,'createBlocks') );
+        add_action('the_post', array( __CLASS__, 'createBlocks' ) );
     }
 
 
@@ -52,6 +52,11 @@ class NV_ContentBlocks {
         // Use delimiters to split the content into blocks
         if ( preg_match( '/<!--block-->/', $temp_content, $matches ) ) {
             $post->post_blocks = explode( $matches[0], $temp_content );
+        }
+
+        // Strip extra white space out of blocks
+        foreach ($post->post_blocks as &$block) {
+            $block = trim($block);
         }
     }
 

@@ -9,7 +9,7 @@ if ( !function_exists('get_the_content_block')) {
      *
      * @return string
      */
-    function get_the_content_block( $block = 1, $post_id = 0 ) {
+    function get_the_content_block( $block = 0, $post_id = 0 ) {
 
         global $post, $page, $more, $preview, $pages, $multipage;
 
@@ -36,8 +36,8 @@ if ( !function_exists('the_content_block')) {
      * @param int $block
      * @param int $post_id
      */
-    function the_content_block( $block = 1, $post_id = 0 ) {
-        $content = get_the_content_block($block,$post_id);
+    function the_content_block( $block = 0, $post_id = 0 ) {
+        $content = get_the_content_block( $block, $post_id );
         $content = apply_filters( 'the_content', $content );
         $content = str_replace( ']]>', ']]&gt;', $content );
         echo $content;
