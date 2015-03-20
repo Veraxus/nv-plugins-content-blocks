@@ -1,9 +1,11 @@
 === NOUVEAU Content Blocks ===
-Contributors: veraxus
+Contributors: Veraxus
 Tags: admin, theme, tinymce, editor, templates, developer, nouveau
+Requires PHP: 5.3
 Requires at least: 3.5
-Tested up to: 3.8
-Stable tag: 0.1
+Tested up to: 4.2
+Stable tag: 0.2
+GitHub Plugin URI: veraxus/nv-plugins-content-blocks
 
 A lightweight WordPress plugin that allows you to split content into blocks that can be used in theme templates.
 
